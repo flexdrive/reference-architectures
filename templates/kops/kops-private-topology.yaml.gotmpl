@@ -340,7 +340,95 @@ spec:
   - {{ . }}
 {{- end }}
 
-{{- if getenv "NODE_MAX_SIZE_PER_AZ" }}
+---
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: {{ getenv "KOPS_CLUSTER_NAME" }}
+  name: staging
+spec:
+  detailedInstanceMonitoring: {{ getenv "KOPS_CLOUDWATCH_DETAILED_MONITORING" "false" }}
+  associatePublicIp: false
+  {{- if bool (getenv "KOPS_CLUSTER_AUTOSCALER_ENABLED" "false") }}
+  cloudLabels:
+    k8s.io/cluster-autoscaler/enabled: "true"
+    k8s.io/cluster-autoscaler/{{ getenv "KOPS_CLUSTER_NAME" }}: "owned"
+  {{- end }}
+  nodeLabels:
+    instanceGroup: staging
+  image: {{ getenv "KOPS_BASE_IMAGE" }}
+  machineType: {{ getenv "NODE_MACHINE_TYPE" }}
+  maxSize: {{ getenv "NODE_MAX_SIZE" }}
+  minSize: {{ getenv "NODE_MIN_SIZE" }}
+  role: Node
+  subnets:
+  {{- range (getenv "KOPS_NODES_AVAILABILITY_ZONES" ( getenv "KOPS_AVAILABILITY_ZONES" ) | strings.Split ",") }}
+  - {{ . }}
+  {{- end }}
+
+---
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: {{ getenv "KOPS_CLUSTER_NAME" }}
+  name: prod
+spec:
+  detailedInstanceMonitoring: {{ getenv "KOPS_CLOUDWATCH_DETAILED_MONITORING" "false" }}
+  associatePublicIp: false
+  {{- if bool (getenv "KOPS_CLUSTER_AUTOSCALER_ENABLED" "false") }}
+  cloudLabels:
+    k8s.io/cluster-autoscaler/enabled: "true"
+    k8s.io/cluster-autoscaler/{{ getenv "KOPS_CLUSTER_NAME" }}: "owned"
+  {{- end }}
+  nodeLabels:
+    instanceGroup: prod
+    node-role.flexdrive.io/prod: ""
+  taints:
+  - node-role.flexdrive.io=prod:NoSchedule
+  image: {{ getenv "KOPS_BASE_IMAGE" }}
+  machineType: {{ getenv "NODE_MACHINE_TYPE" }}
+  maxSize: {{ getenv "NODE_MAX_SIZE" }}
+  minSize: {{ getenv "NODE_MIN_SIZE" }}
+  role: Node
+  subnets:
+  {{- range (getenv "KOPS_NODES_AVAILABILITY_ZONES" ( getenv "KOPS_AVAILABILITY_ZONES" ) | strings.Split ",") }}
+  - {{ . }}
+  {{- end }}
+
+---
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: {{ getenv "KOPS_CLUSTER_NAME" }}
+  name: ops
+spec:
+  detailedInstanceMonitoring: {{ getenv "KOPS_CLOUDWATCH_DETAILED_MONITORING" "false" }}
+  associatePublicIp: false
+  {{- if bool (getenv "KOPS_CLUSTER_AUTOSCALER_ENABLED" "false") }}
+  cloudLabels:
+    k8s.io/cluster-autoscaler/enabled: "true"
+    k8s.io/cluster-autoscaler/{{ getenv "KOPS_CLUSTER_NAME" }}: "owned"
+  {{- end }}
+  nodeLabels:
+    instanceGroup: ops
+    node-role.flexdrive.io/ops: ""
+  taints:
+  - node-role.flexdrive.io=ops:NoSchedule
+  image: {{ getenv "KOPS_BASE_IMAGE" }}
+  machineType: {{ getenv "NODE_MACHINE_TYPE" }}
+  maxSize: {{ getenv "NODE_MAX_SIZE" }}
+  minSize: {{ getenv "NODE_MIN_SIZE" }}
+  role: Node
+  subnets:
+  {{- range (getenv "KOPS_NODES_AVAILABILITY_ZONES" ( getenv "KOPS_AVAILABILITY_ZONES" ) | strings.Split ",") }}
+  - {{ . }}
+  {{- end }}
+
+
+{{/* {{- if getenv "NODE_MAX_SIZE_PER_AZ" }}
 {{ range (getenv "KOPS_NODES_AVAILABILITY_ZONES" ( getenv "KOPS_AVAILABILITY_ZONES" ) | strings.Split ",") }}
 ---
 apiVersion: kops/v1alpha2
@@ -395,7 +483,7 @@ spec:
   {{- range (getenv "KOPS_NODES_AVAILABILITY_ZONES" ( getenv "KOPS_AVAILABILITY_ZONES" ) | strings.Split ",") }}
   - {{ . }}
   {{- end }}
-{{- end }}
+{{- end }} */}}
 
 {{/* Allow the manifest to be extended via a datasource */}}
 {{- if (datasourceExists "extensions") -}}
